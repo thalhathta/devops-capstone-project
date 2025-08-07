@@ -13,10 +13,11 @@ from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
 from service import talisman
+
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
-HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
+HTTPS_ENVIRON = {"wsgi.url_scheme": "https"}
 BASE_URL = "/accounts"
 
 
@@ -35,6 +36,7 @@ class TestAccountService(TestCase):
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
         talisman.force_https = False
+
     @classmethod
     def tearDownClass(cls):
         """Runs once before test suite"""
@@ -90,9 +92,7 @@ class TestAccountService(TestCase):
         """It should Create a new Account"""
         account = AccountFactory()
         response = self.client.post(
-            BASE_URL,
-            json=account.serialize(),
-            content_type="application/json"
+            BASE_URL, json=account.serialize(), content_type="application/json"
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -117,35 +117,33 @@ class TestAccountService(TestCase):
         """It should not Create an Account when sending the wrong media type"""
         account = AccountFactory()
         response = self.client.post(
-            BASE_URL,
-            json=account.serialize(),
-            content_type="test/html"
+            BASE_URL, json=account.serialize(), content_type="test/html"
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
     def test_read_an_account(self):
         """It should Read an Account by ID"""
-        account =  self._create_accounts(1)[0]
+        account = self._create_accounts(1)[0]
         response = self.client.get(
-            f"{BASE_URL}/{account.id}", content_type = "application/json"
+            f"{BASE_URL}/{account.id}", content_type="application/json"
         )
-        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
-        self.assertEqual(data["name"],account.name)
-    
+        self.assertEqual(data["name"], account.name)
+
     def test_account_not_found(self):
         """It should return 404 if the Account is not found"""
         response = self.client.get(f"{BASE_URL}/0")
-        self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
-        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_list_all_accounts(self):
         """It should List all Accounts"""
         self._create_accounts(3)
         response = self.client.get(BASE_URL)
-        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
-        self.assertEqual(len(data),3)
+        self.assertEqual(len(data), 3)
 
     def test_update_an_account(self):
         """It should Update an existing Account"""
@@ -155,23 +153,24 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
         # update the account
-        new_account =  resp.get_json()
+        new_account = resp.get_json()
         new_account["name"] = "Thalhath"
         resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         updated_account = resp.get_json()
         self.assertEqual(updated_account["name"], "Thalhath")
+
     def test_update_account_not_found(self):
-            """It should return 404 if the Account is not found"""
-            test_account = AccountFactory()
-            response = self.client.put(f"{BASE_URL}/0", json = test_account.serialize())
-            self.assertEqual(response.status_code,status.HTTP_400_BAD_REQUEST)
+        """It should return 404 if the Account is not found"""
+        test_account = AccountFactory()
+        response = self.client.put(f"{BASE_URL}/0", json=test_account.serialize())
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_an_account(self):
         """It should Delete an Account"""
         account = self._create_accounts(1)[0]
         resp = self.client.delete(f"{BASE_URL}/{account.id}")
-        self.assertEqual(resp.status_code,status.HTTP_204_NO_CONTENT)\
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
@@ -180,20 +179,20 @@ class TestAccountService(TestCase):
 
     def test_security_headers(self):
         """It should return security headers"""
-        response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         headers = {
-            'X-Frame-Options': 'SAMEORIGIN',
-            'X-Content-Type-Options': 'nosniff',
-            'Content-Security-Policy': 'default-src \'self\'; object-src \'none\'',
-            'Referrer-Policy': 'strict-origin-when-cross-origin'
+            "X-Frame-Options": "SAMEORIGIN",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'self'; object-src 'none'",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
         }
         for key, value in headers.items():
             self.assertEqual(response.headers.get(key), value)
-    
+
     def test_cors_security(self):
         """It should return a CORS header"""
-        response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
+        response = self.client.get("/", environ_overrides=HTTPS_ENVIRON)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check for the CORS header
-        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
+        self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), "*")
