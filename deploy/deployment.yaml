@@ -17,9 +17,11 @@ spec:
       labels:
         app: accounts
     spec:
-      containers:
-      - image: us.icr.io/sn-labs-thalhathta24/accounts:1
-        name: accounts
+      template:
+        spec:
+          containers:
+          - image: us.icr.io/sn-labs-thalhathta24/accounts:1
+            name: accounts
         resources: {}
 
         env:
